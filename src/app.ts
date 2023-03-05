@@ -90,7 +90,21 @@ class Parser {
         if (!property) return acc;
         const propertyType = propertyTypesMapping[property];
         const convertedValue = this.convertValue(value, propertyType);
-        return { ...acc, [property]: convertedValue };
+        if (property !== 'description') return { ...acc, [property]: convertedValue };
+        const splittedValue = convertedValue.displayValue.split('    ');
+        const payeeInfo = convertedValue.displayValue.includes('Referans')
+          ? splittedValue[1].slice(1)
+          : '';
+        const payee: ConvertedValue = {
+          copyValue: payeeInfo,
+          displayValue: payeeInfo,
+          value: payeeInfo,
+        };
+        return {
+          ...acc,
+          [property]: convertedValue,
+          payee,
+        };
       }, initTransactionValues as Transaction);
 
       return transaction;
@@ -112,9 +126,8 @@ class Parser {
 
     const bankProperties = this.getProperties(rawProperties);
     const transactions = this.getTransaction(rawTransaction, bankProperties);
-    console.log('transactions: ', transactions);
 
-    return { headers: [] as string[], operations: [] };
+    return transactions;
   }
 }
 
