@@ -1,5 +1,10 @@
-import { propertyMapping } from './constants';
-import { BankProperty, Transaction, RequiredBankProperty } from './types';
+import { propertyMapping, propertyTypeMapping } from './constants';
+import {
+  BankProperty,
+  Transaction,
+  RequiredBankProperty,
+  ValueType,
+} from './types';
 
 class Parser {
   data: string[] | null;
@@ -8,11 +13,11 @@ class Parser {
     this.data = null;
   }
 
-  parseLine(line: string) {
+  private parseLine(line: string) {
     return line.split('\t').map((item) => item.trim());
   }
 
-  getProperties(line: string): string[] {
+  private getProperties(line: string): string[] {
     return this.parseLine(line).map((item) => item.trim());
   }
 
@@ -25,35 +30,41 @@ class Parser {
     return new Date(`${date}T${time}`);
   }
 
+  private convertValue(value: string, type: ValueType) {
+    const mapping = {
+      number: (value = '') => Number(value.replace(',', '')),
+      string: (value = '') => value,
+      boolean: (value = '') => Boolean(value),
+      date: (value = '') => this.parseDate(value),
+    };
+
+    return mapping[type](value);
+  }
+
   private getTransaction(lines: string[], bankProperties: string[]): Transaction[] {
     const filteredLines = lines.filter((item) => !!item);
     const convertedLines = filteredLines.map((row) => {
       const parsedRow = this.parseLine(row);
 
-      const rawTransaction = bankProperties.map(
-        (
-          key,
-          i
-        ): {
-          key: BankProperty;
-          value: string;
-        } => ({ key: key as BankProperty, value: parsedRow[i] })
+      const rawTransaction = bankProperties.map((key, i): { key: BankProperty; value: string } => ({
+        key: key as BankProperty,
+        value: parsedRow[i],
+      }));
+
+      const transaction = rawTransaction.reduce<Transaction>(
+        (acc, { key, value }) => {
+          const property = propertyMapping[key as RequiredBankProperty];
+          if (!property) return acc;
+          const propertyType = propertyTypeMapping[property];
+          const convertedValue = this.convertValue(value, propertyType);
+          if (property !== 'description') return { ...acc, [property]: convertedValue };
+          const splittedValue = value.split('    ');
+          const payee = value.includes('Referans') ? splittedValue[1].slice(1) : '';
+
+          return { ...acc, [property]: value, payee };
+        },
+        { isClear: false, data: row, memo: '' } as Transaction
       );
-
-      const initTransactionValues: Record<string, string> = {
-        data: row,
-        memo: '',
-      };
-
-      const transaction = rawTransaction.reduce((acc: Transaction, { key, value }) => {
-        const property = propertyMapping[key as RequiredBankProperty];
-        if (!property) return acc;
-        if (property !== 'description') return { ...acc, [property]: value };
-        const splittedValue = value.split('    ');
-        const payee = value.includes('Referans') ? splittedValue[1].slice(1) : '';
-
-        return { ...acc, [property]: value, payee };
-      }, initTransactionValues as Transaction);
 
       return transaction;
     });
@@ -74,7 +85,6 @@ class Parser {
 
     const bankProperties = this.getProperties(rawProperties);
     const transactions = this.getTransaction(rawTransaction, bankProperties);
-    console.log('transactions: ', transactions);
 
     return transactions;
   }

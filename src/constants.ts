@@ -1,15 +1,4 @@
-import { BankProperty, Property, RequiredBankProperty } from './types';
-
-export const ColumnsMapping: Record<Property, BankProperty | null> = {
-  description: 'NARRATIVE',
-  payee: null,
-  transactionDate: 'TRANSACTION DATE',
-  processDate: 'PROCESS DATE',
-  amount: 'AMOUNT',
-  balance: 'BALANCE',
-  memo: null,
-  data: null,
-};
+import { BankProperty, Property, PropertyType, RequiredBankProperty } from './types';
 
 export const requiredBankProperties: BankProperty[] = [
   'NARRATIVE',
@@ -25,15 +14,18 @@ export const propertyMapping: Record<RequiredBankProperty, Property> = {
   BALANCE: 'balance',
   'PROCESS DATE': 'processDate',
   'TRANSACTION DATE': 'transactionDate',
+  'TRANSACTION ID': 'id',
 };
 
-export const properties: Property[] = [
-  'processDate',
-  'transactionDate',
-  'amount',
-  'balance',
-  'description',
-  'payee',
-  'memo',
-  'data',
-];
+export const propertyTypeMapping: Record<Property, PropertyType> = {
+  id: 'string',
+  description: 'string',
+  payee: 'string',
+  transactionDate: 'date',
+  processDate: 'date',
+  amount: 'number',
+  balance: 'number',
+  memo: 'string',
+  data: 'string',
+  isClear: 'boolean',
+};

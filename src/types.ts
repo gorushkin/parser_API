@@ -1,11 +1,23 @@
-export type Transaction = Record<Property, string>;
+export type Transaction = {
+  id: string;
+  description: string;
+  payee: string;
+  transactionDate: Date;
+  processDate: Date;
+  amount: number;
+  balance: number;
+  memo: string;
+  data: string;
+  isClear: boolean;
+};
 
 export type RequiredBankProperty =
   | 'NARRATIVE'
   | 'TRANSACTION DATE'
   | 'PROCESS DATE'
   | 'AMOUNT'
-  | 'BALANCE';
+  | 'BALANCE'
+  | 'TRANSACTION ID';
 
 export type BankProperty =
   | RequiredBankProperty
@@ -17,7 +29,6 @@ export type BankProperty =
   | 'REFERANCE'
   | 'FUNDS TRANSFER'
   | 'REFNO'
-  | 'TRANSACTION ID'
   | 'IDENTIFICATION NUMBER'
   | 'TAX NUMBER'
   | 'D/C'
@@ -32,4 +43,16 @@ export type Property =
   | 'amount'
   | 'balance'
   | 'memo'
-  | 'data';
+  | 'data'
+  | 'isClear'
+  | 'id';
+
+export type ValueType = 'string' | 'date' | 'boolean' | 'number';
+
+export type Value = string | Date | number | boolean;
+export type PropertyType = 'string' | 'date' | 'boolean' | 'number';
+
+export type Converter = (
+  value: string,
+  type: 'string' | 'date' | 'boolean' | 'number'
+) => number | string | boolean | Date;

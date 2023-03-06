@@ -2,13 +2,18 @@
   "name": "parser",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "build/index.js",
+  "bin": {
+    "parser": "build/bin/parser.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -p ./tsconfig.json",
-    "dev": "nodemon -x ts-node -e ts src/index.ts -- --file testData/test.csv",
-    "start": "node src/index.js"
+    "dev": "nodemon -x ts-node -e ts src/bin/parser.ts -- --file testData/test.csv",
+    "start": "node src/index.js",
+    "prepare": "npm run build"
   },
+  "types": "build/index.d.ts",
   "keywords": [],
   "author": "",
   "license": "ISC",
