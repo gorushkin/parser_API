@@ -1,12 +1,5 @@
-import { propertyMapping, propertyTypesMapping } from './constants';
-import {
-  PropertyType,
-  BankProperty,
-  Transaction,
-  Value,
-  RequiredBankProperty,
-  ConvertedValue,
-} from './types';
+import { propertyMapping } from './constants';
+import { BankProperty, Transaction, RequiredBankProperty } from './types';
 
 class Parser {
   data: string[] | null;
@@ -32,31 +25,6 @@ class Parser {
     return new Date(`${date}T${time}`);
   }
 
-  private convertValue(
-    value: string,
-    type: PropertyType
-  ): { displayValue: string; copyValue: string; value: Value } {
-    const mapping = {
-      number: (value = '') => ({
-        value: Number(value.replace(',', '')),
-        displayValue: value,
-        copyValue: value.replace(',', ''),
-      }),
-      string: (value = '') => ({
-        value: value,
-        displayValue: value,
-        copyValue: value,
-      }),
-      date: (value = '') => ({
-        value: this.parseDate(value),
-        displayValue: value,
-        copyValue: value,
-      }),
-    };
-
-    return mapping[type](value);
-  }
-
   private getTransaction(lines: string[], bankProperties: string[]): Transaction[] {
     const filteredLines = lines.filter((item) => !!item);
     const convertedLines = filteredLines.map((row) => {
@@ -72,39 +40,19 @@ class Parser {
         } => ({ key: key as BankProperty, value: parsedRow[i] })
       );
 
-      const initTransactionValues: Record<string, ConvertedValue> = {
-        data: {
-          copyValue: row,
-          value: row,
-          displayValue: row,
-        },
-        memo: {
-          copyValue: '',
-          value: '',
-          displayValue: '',
-        },
+      const initTransactionValues: Record<string, string> = {
+        data: row,
+        memo: '',
       };
 
       const transaction = rawTransaction.reduce((acc: Transaction, { key, value }) => {
         const property = propertyMapping[key as RequiredBankProperty];
         if (!property) return acc;
-        const propertyType = propertyTypesMapping[property];
-        const convertedValue = this.convertValue(value, propertyType);
-        if (property !== 'description') return { ...acc, [property]: convertedValue };
-        const splittedValue = convertedValue.displayValue.split('    ');
-        const payeeInfo = convertedValue.displayValue.includes('Referans')
-          ? splittedValue[1].slice(1)
-          : '';
-        const payee: ConvertedValue = {
-          copyValue: payeeInfo,
-          displayValue: payeeInfo,
-          value: payeeInfo,
-        };
-        return {
-          ...acc,
-          [property]: convertedValue,
-          payee,
-        };
+        if (property !== 'description') return { ...acc, [property]: value };
+        const splittedValue = value.split('    ');
+        const payee = value.includes('Referans') ? splittedValue[1].slice(1) : '';
+
+        return { ...acc, [property]: value, payee };
       }, initTransactionValues as Transaction);
 
       return transaction;
@@ -126,6 +74,7 @@ class Parser {
 
     const bankProperties = this.getProperties(rawProperties);
     const transactions = this.getTransaction(rawTransaction, bankProperties);
+    console.log('transactions: ', transactions);
 
     return transactions;
   }

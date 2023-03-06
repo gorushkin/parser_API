@@ -1,15 +1,4 @@
-export type Value = string | Date | number;
-export type PropertyType = 'number' | 'date' | 'string';
-
-export type ConvertedValue = {
-  value: Value;
-  copyValue: string;
-  displayValue: string;
-};
-
-export type TransactionValue = string | Date | number;
-
-export type Transaction = Record<Property, ConvertedValue>;
+export type Transaction = Record<Property, string>;
 
 export type RequiredBankProperty =
   | 'NARRATIVE'
@@ -44,5 +33,3 @@ export type Property =
   | 'balance'
   | 'memo'
   | 'data';
-
-export type TableMode = 'groups' | 'whole';
