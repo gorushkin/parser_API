@@ -1,10 +1,5 @@
 import { propertyMapping, propertyTypeMapping } from './constants';
-import {
-  BankProperty,
-  Transaction,
-  RequiredBankProperty,
-  ValueType,
-} from './types';
+import { BankProperty, Transaction, RequiredBankProperty, ValueType } from './types';
 
 class Parser {
   data: string[] | null;
@@ -35,7 +30,7 @@ class Parser {
       number: (value = '') => Number(value.replace(',', '')),
       string: (value = '') => value,
       boolean: (value = '') => Boolean(value),
-      date: (value = '') => this.parseDate(value),
+      date: (value = '') => this.parseDate(value).toISOString(),
     };
 
     return mapping[type](value);

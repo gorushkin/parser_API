@@ -2,8 +2,8 @@ export type Transaction = {
   id: string;
   description: string;
   payee: string;
-  transactionDate: Date;
-  processDate: Date;
+  transactionDate: string;
+  processDate: string;
   amount: number;
   balance: number;
   memo: string;
