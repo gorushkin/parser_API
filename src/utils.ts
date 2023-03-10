@@ -19,8 +19,8 @@ export function getParsedArguments(args: string[]) {
   return parsedArguments;
 }
 
-export async function getFileData(path: string) {
+export async function getFileData(path: string): Promise<Buffer> {
   const absolutePath = getAbsolutePath(path);
 
-  return (await readFile(absolutePath)).toString();
+  return await readFile(absolutePath);
 }

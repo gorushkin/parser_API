@@ -1,19 +1,23 @@
 import { propertyMapping, propertyTypeMapping } from './constants';
-import { BankProperty, Transaction, RequiredBankProperty, ValueType } from './types';
+import xlsx from 'node-xlsx';
+
+import {
+  BankProperty,
+  Transaction,
+  RequiredBankProperty,
+  ValueType,
+  SheetLine,
+  Sheet,
+  Payee,
+} from './types';
 
 class Parser {
-  data: string[] | null;
-
-  constructor() {
-    this.data = null;
-  }
-
   private parseLine(line: string) {
     return line.split('\t').map((item) => item.trim());
   }
 
-  private getProperties(line: string): string[] {
-    return this.parseLine(line).map((item) => item.trim());
+  private getProperties(headers: SheetLine): string[] {
+    return Object.values(headers).map((item) => item.trim());
   }
 
   private parseDate(value: string) {
@@ -27,7 +31,7 @@ class Parser {
 
   private convertValue(value: string, type: ValueType) {
     const mapping = {
-      number: (value = '') => Number(value.replace(',', '')),
+      number: (value = '') => value,
       string: (value = '') => value,
       boolean: (value = '') => Boolean(value),
       date: (value = '') => this.parseDate(value).toISOString(),
@@ -36,14 +40,28 @@ class Parser {
     return mapping[type](value);
   }
 
-  private getTransaction(lines: string[], bankProperties: string[]): Transaction[] {
+  private fillEmptyValues(line: SheetLine): string[] {
+    const res = [];
+
+    for (const element of line) {
+      res.push(element || '');
+    }
+
+    return res;
+  }
+
+  private getPayeeName = (data: string): Payee => {
+    const payeeId = data.substring(38, 45);
+    const payeeName = data.substring(62, 100);
+    return { payeeId, payeeName };
+  };
+
+  private getTransaction(lines: SheetLine[], bankProperties: string[]): Transaction[] {
     const filteredLines = lines.filter((item) => !!item);
     const convertedLines = filteredLines.map((row) => {
-      const parsedRow = this.parseLine(row);
-
       const rawTransaction = bankProperties.map((key, i): { key: BankProperty; value: string } => ({
         key: key as BankProperty,
-        value: parsedRow[i],
+        value: row[i],
       }));
 
       const transaction = rawTransaction.reduce<Transaction>(
@@ -53,12 +71,10 @@ class Parser {
           const propertyType = propertyTypeMapping[property];
           const convertedValue = this.convertValue(value, propertyType);
           if (property !== 'description') return { ...acc, [property]: convertedValue };
-          const splittedValue = value.split('    ');
-          const payee = value.includes('Referans') ? splittedValue[1].slice(1) : '';
-
-          return { ...acc, [property]: value, payee };
+          const payee = this.getPayeeName(value);
+          return { ...acc, [property]: value, ...payee };
         },
-        { isClear: false, data: row, memo: '' } as Transaction
+        { isClear: false, memo: '', data: row.join('\t') } as Transaction
       );
 
       return transaction;
@@ -67,21 +83,21 @@ class Parser {
     return convertedLines;
   }
 
-  parse(data: string | null) {
-    if (!data) return null;
-
-    this.data = data
-      .toString()
-      .split('\n')
-      .filter((item) => !!item);
-
-    const rawProperties = this.data[0];
-    const rawTransaction = this.data.slice(1);
-
+  private convert(data: Sheet[]) {
+    const sheet = data[0].data as SheetLine[];
+    const rawProperties = sheet[5];
     const bankProperties = this.getProperties(rawProperties);
-    const transactions = this.getTransaction(rawTransaction, bankProperties);
+
+    const rawTransactions = sheet.slice(6, -4);
+    const filledTransactions = rawTransactions.map(this.fillEmptyValues);
+    const transactions = this.getTransaction(filledTransactions, bankProperties);
 
     return transactions;
+  }
+
+  parse(buffer: Buffer): Transaction[] {
+    const data = xlsx.parse(buffer, { blankrows: false });
+    return this.convert(data);
   }
 }
 

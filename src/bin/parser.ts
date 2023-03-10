@@ -11,9 +11,10 @@ async function app() {
 
   if (!file) throw new Error('You should set the file path');
 
-  const data = await getFileData(file.toString());
+  const buffer = await getFileData(file);
 
-  const qwe = parser.parse(data);
+  const transactions = parser.parse(buffer);
+  return transactions;
 }
 
 app();
