@@ -13,7 +13,7 @@ async function app() {
 
   const buffer = await getFileData(file);
 
-  const transactions = parser.parse(buffer);
+  const { transactions, payees } = parser.parse(buffer);
   return transactions;
 }
 

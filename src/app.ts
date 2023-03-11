@@ -8,7 +8,9 @@ import {
   ValueType,
   SheetLine,
   Sheet,
+  PayeeInfo,
   Payee,
+  Payees,
 } from './types';
 
 class Parser {
@@ -50,7 +52,8 @@ class Parser {
     return res;
   }
 
-  private getPayeeName = (data: string): Payee => {
+  private getPayeeName = (data: string): PayeeInfo => {
+    if (!data.includes('Referans')) return { payeeId: '', payeeName: '' };
     const payeeId = data.substring(38, 45);
     const payeeName = data.substring(62, 100);
     return { payeeId, payeeName };
@@ -83,6 +86,16 @@ class Parser {
     return convertedLines;
   }
 
+  private getPayees = (transactions: Transaction[]): Payees => {
+    return transactions.reduce<Payees>(
+      (acc, { payeeId, payeeName }) => ({
+        ...acc,
+        ...(payeeId && { [payeeId]: { id: payeeId, name: payeeName, displayName: '' } }),
+      }),
+      {}
+    );
+  };
+
   private convert(data: Sheet[]) {
     const sheet = data[0].data as SheetLine[];
     const rawProperties = sheet[5];
@@ -91,11 +104,12 @@ class Parser {
     const rawTransactions = sheet.slice(6, -4);
     const filledTransactions = rawTransactions.map(this.fillEmptyValues);
     const transactions = this.getTransaction(filledTransactions, bankProperties);
+    const payees = this.getPayees(transactions);
 
-    return transactions;
+    return { transactions, payees };
   }
 
-  parse(buffer: Buffer): Transaction[] {
+  parse(buffer: Buffer): { transactions: Transaction[]; payees: Payees } {
     const data = xlsx.parse(buffer, { blankrows: false });
     return this.convert(data);
   }

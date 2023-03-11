@@ -1,4 +1,6 @@
-export type Payee = { payeeId: string; payeeName: string }
+export type PayeeInfo = { payeeId: string; payeeName: string };
+export type Payee = { id: string; name: string; displayName: string };
+export type Payees = Record<string, Payee>;
 
 export type Transaction = {
   id: string;
@@ -10,8 +12,8 @@ export type Transaction = {
   memo: string;
   data: string;
   isClear: boolean;
-  payeeId: string,
-  payeeName: string,
+  payeeId: string;
+  payeeName: string;
 };
 
 export type RequiredBankProperty =
