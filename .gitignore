@@ -25,4 +25,6 @@ testData
 *.sln
 *.sw?
 
+files
+db
 package-lock.json
