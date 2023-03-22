@@ -10,11 +10,11 @@ router.get('/', (_req, res) => {
 });
 
 router.post('/files', uploadFile);
+router.get('/statements/:name', getStatement);
 
-router.get('/files/:filename', getStatement);
+router.get('/statements', getStatements);
 
-router.get('/files', getStatements);
+router.post('/statements', uploadStatement);
 
-router.post('/statement', uploadStatement);
 
 export { router };

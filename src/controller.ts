@@ -29,8 +29,8 @@ export const getStatements = async (_req: Request, res: Response) => {
 };
 
 export const getStatement = async (req: Request, res: Response) => {
-  const { filename } = req.params;
-  const { data, error, ok } = await db.getStatement(filename);
+  const { name } = req.params;
+  const { data, error, ok } = await db.getStatement(name);
   if (ok) return res.status(200).send({ data });
   res.status(400).send({ error });
 };
@@ -43,7 +43,7 @@ type StatementPayload = {
 export const uploadStatement = async (req: Request, res: Response) => {
   const body: StatementPayload = JSON.parse((await getBody(req)).toString());
   const { name, statement } = body;
-  const { data, error, ok } = await db.saveStatement(name, statement)
+  const { data, error, ok } = await db.saveStatement(name, statement);
   if (ok) return res.status(200).send({ data });
   res.status(400).send({ error });
 };
