@@ -1,6 +1,7 @@
 import path, { join } from 'path';
 import { Transaction } from 'parser';
 import fs from 'fs/promises';
+import { DBError } from './error';
 
 export class DB {
   transactionsPath: string;
@@ -17,15 +18,25 @@ export class DB {
     }
   }
 
-  private async checkPath() {
+  private async checkPath(path: string) {
     try {
-      await fs.access(this.transactionsPath);
+      await fs.access(path);
+      return true;
     } catch (error) {
-      await this.makeDbFolder();
+      return false;
     }
   }
 
-  async updateTransactions(data: Transaction[], name: string) {
+  private async writeData(filePath: string, serializedData: string) {
+    try {
+      await fs.writeFile(filePath, serializedData);
+      return { data: 'The statement was updated succesfully', error: null, ok: true };
+    } catch (error) {
+      return { data: null, error, ok: false };
+    }
+  }
+
+  async updateStatement(data: Transaction[], name: string) {
     const nameWithExt = `${name}.json`;
     const filePath = join(this.transactionsPath, nameWithExt);
     const serializedData = JSON.stringify(data, null, 2);
@@ -37,9 +48,10 @@ export class DB {
     }
   }
 
-  async getTransactions() {
+  async getStatements() {
     try {
-      await this.checkPath();
+      const isTargetExist = await this.checkPath(this.transactionsPath);
+      if (!isTargetExist) this.makeDbFolder();
       const fileNames = await fs.readdir(this.transactionsPath);
       const info = fileNames.map((filename) => path.parse(filename).name);
       return { data: info, error: null, ok: true };
@@ -49,7 +61,7 @@ export class DB {
     }
   }
 
-  async getTransaction(name: string) {
+  async getStatement(name: string) {
     const transactionPath = path.join(this.transactionsPath, `${name}.json`);
     try {
       const buffer = await fs.readFile(transactionPath);
@@ -57,6 +69,20 @@ export class DB {
       return { data, error: null, ok: true };
     } catch (error) {
       const message = 'The filename is not correct';
+      return { data: null, error: message, ok: false };
+    }
+  }
+
+  async saveStatement(name: string, statement: Transaction[]) {
+    const nameWithExt = `${name}.json`;
+    const filePath = join(this.transactionsPath, nameWithExt);
+    const serializedData = JSON.stringify(statement, null, 2);
+    const isTargetExist = await this.checkPath(filePath);
+    try {
+      if (!isTargetExist) throw new DBError('The file name is not correct');
+      return await this.writeData(filePath, serializedData);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Something went wrong';
       return { data: null, error: message, ok: false };
     }
   }

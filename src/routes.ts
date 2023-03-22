@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { delay } from './until';
-import { getFile, getTransaction, uploadFile } from './controller';
+import { getStatement, getStatements, uploadFile, uploadStatement } from './controller';
 
 const router = Router();
 
@@ -11,8 +11,10 @@ router.get('/', (_req, res) => {
 
 router.post('/files', uploadFile);
 
-router.get('/files/:filename', getFile);
+router.get('/files/:filename', getStatement);
 
-router.get('/files', getTransaction);
+router.get('/files', getStatements);
+
+router.post('/statement', uploadStatement);
 
 export { router };
