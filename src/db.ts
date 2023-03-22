@@ -9,6 +9,22 @@ export class DB {
     this.transactionsPath = join(process.cwd(), path);
   }
 
+  private async makeDbFolder() {
+    try {
+      await fs.mkdir(this.transactionsPath);
+    } catch (error) {
+      console.log('error: ', error);
+    }
+  }
+
+  private async checkPath() {
+    try {
+      await fs.access(this.transactionsPath);
+    } catch (error) {
+      await this.makeDbFolder();
+    }
+  }
+
   async updateTransactions(data: Transaction[], name: string) {
     const nameWithExt = `${name}.json`;
     const filePath = join(this.transactionsPath, nameWithExt);
@@ -23,11 +39,13 @@ export class DB {
 
   async getTransactions() {
     try {
+      await this.checkPath();
       const fileNames = await fs.readdir(this.transactionsPath);
       const info = fileNames.map((filename) => path.parse(filename).name);
       return { data: info, error: null, ok: true };
     } catch (error) {
-      return { data: null, error, ok: false };
+      const message = error instanceof Error ? error.message : 'Something went wrong';
+      return { data: null, error: message, ok: false };
     }
   }
 }
