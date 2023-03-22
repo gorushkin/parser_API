@@ -26,3 +26,10 @@ export const getTransaction = async (_req: Request, res: Response) => {
   if (ok) return res.status(200).send({ data });
   res.status(500).send({ error });
 };
+
+export const getFile = async (req: Request, res: Response) => {
+  const { filename } = req.params;
+  const { data, error, ok } = await db.getTransaction(filename);
+  if (ok) return res.status(200).send({ data });
+  res.status(500).send({ error });
+};

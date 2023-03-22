@@ -1,11 +1,11 @@
 import express, { Express } from 'express';
 import cors from 'cors';
-import { getTransaction, uploadFile } from './controller';
 import formData from 'express-form-data';
 import { join } from 'path';
 import { DB } from './db';
 import { dbPath } from './constants';
-import { checkFilesPath, delay } from './until';
+import { checkFilesPath } from './until';
+import { router } from './routes';
 
 export const db = new DB(dbPath);
 
@@ -26,13 +26,7 @@ const init = async (app: Express, tempFilesPath: string, port: number) => {
 
   app.use(formData.parse(options));
 
-  app.get('/', (req, res) => {
-    delay(() => res.status(200).send({ data: 'delay is 500' }), 500);
-  });
-
-  app.post('/files', uploadFile);
-
-  app.get('/files', getTransaction);
+  app.use('/', router);
 
   app.listen(3000, () => {
     console.log(`app started on port ${port}`);

@@ -48,4 +48,16 @@ export class DB {
       return { data: null, error: message, ok: false };
     }
   }
+
+  async getTransaction(name: string) {
+    const transactionPath = path.join(this.transactionsPath, `${name}.json`);
+    try {
+      const buffer = await fs.readFile(transactionPath);
+      const data = JSON.parse(buffer.toString());
+      return { data, error: null, ok: true };
+    } catch (error) {
+      const message = 'The filename is not correct';
+      return { data: null, error: message, ok: false };
+    }
+  }
 }
