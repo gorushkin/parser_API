@@ -7,7 +7,8 @@ import { dbPath } from './constants';
 import { checkFilesPath } from './until';
 import { router } from './routes';
 
-export const db = new DB(dbPath);
+export const db = new DB();
+db.init(dbPath);
 
 const app = express();
 
