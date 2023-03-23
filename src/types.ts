@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request } from 'express';
 
 export interface FormattedRequest extends Request {
   files: Record<string, File>;
@@ -35,3 +35,5 @@ export interface CurResponse {
 export type Currencies = Record<Currency, { name: string; value: string; code: Currency }>;
 
 export type Rates = Record<string, Currencies>;
+
+export type DBResult<T> = { data: T; ok: true } | { error: string; ok: false };
