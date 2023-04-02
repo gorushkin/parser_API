@@ -39,6 +39,11 @@ export const checkFilesPath = async (path: string) => {
 export const delay = async (cb: Function, time: number = 1000) =>
   new Promise((resolve) => setTimeout(() => resolve(cb()), time));
 
+const convertStringToNumber = (value: string, nominal: string) => {
+  const getNumber = (str: string) => parseFloat(str.replace(',', '.'));
+  return Number((getNumber(value) / getNumber(nominal)).toFixed(4));
+};
+
 export const getRate = async (date: string) => {
   const URL = `https://www.cbr.ru/scripts/XML_daily_eng.asp?date_req=${date}`;
   const { data } = await axios(URL);
@@ -51,6 +56,7 @@ export const getRate = async (date: string) => {
       [item.CharCode._text]: {
         name: item.Name._text,
         value: item.Value._text,
+        convertedValue: convertStringToNumber(item.Value._text, item.Nominal._text),
         code: item.CharCode._text,
       },
     }),

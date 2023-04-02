@@ -1,10 +1,10 @@
-import path, { join } from "path";
-import { Transaction } from "parser";
-import fs from "fs/promises";
-import { DBError } from "./error";
-import dayjs from "dayjs";
-import { getRate } from "./until";
-import { Rates, Currency, DBResult } from "./types";
+import path, { join } from 'path';
+import { Transaction } from 'parser';
+import fs from 'fs/promises';
+import { DBError } from './error';
+import dayjs from 'dayjs';
+import { getRate } from './until';
+import { Rates, Currency, DBResult } from './types';
 
 export class DB {
   transactionsPath: string;
@@ -14,13 +14,17 @@ export class DB {
 
   async init(path: string) {
     this.dbPath = join(process.cwd(), path);
-    this.transactionsPath = join(this.dbPath, "statements");
-    this.ratesPath = join(this.dbPath, "rates.json");
+    this.transactionsPath = join(this.dbPath, 'statements');
+    this.ratesPath = join(this.dbPath, 'rates.json');
     const isPathExist = await this.checkPath(this.dbPath);
+    const isRatesFileExist = await this.checkPath(this.ratesPath);
     if (!isPathExist) {
       await this.makeDbFolder(this.dbPath);
       await this.makeDbFolder(this.transactionsPath);
-      await fs.writeFile(this.ratesPath, JSON.stringify({}), "utf-8");
+      await fs.writeFile(this.ratesPath, JSON.stringify({}), 'utf-8');
+    }
+    if (!isRatesFileExist) {
+      await fs.writeFile(this.ratesPath, JSON.stringify({}), 'utf-8');
     }
   }
 
@@ -28,7 +32,7 @@ export class DB {
     try {
       await fs.mkdir(path);
     } catch (error) {
-      console.log("error: ", error);
+      console.log('error: ', error);
     }
   }
 
@@ -44,7 +48,7 @@ export class DB {
   private async writeData(filePath: string, serializedData: string) {
     try {
       await fs.writeFile(filePath, serializedData);
-      return { data: "The statement was updated succesfully", error: null, ok: true };
+      return { data: 'The statement was updated succesfully', error: null, ok: true };
     } catch (error) {
       return { data: null, error, ok: false };
     }
@@ -52,10 +56,12 @@ export class DB {
 
   private async readJSONData(path: string): Promise<any | void> {
     try {
-      const data = JSON.parse(await fs.readFile(path, "utf-8"));
+      const data = JSON.parse(await fs.readFile(path, 'utf-8'));
       return data;
     } catch (error) {
-      throw new DBError("There is an error with reading currencies");
+      console.log('error: ', error);
+      // TODO: Добавить создание файла при его отсутсвии
+      throw new DBError('There is an error with reading currencies');
     }
   }
 
@@ -63,15 +69,17 @@ export class DB {
     try {
       await fs.writeFile(path, JSON.stringify(data, null, 2));
     } catch (error) {
-      throw new DBError("There is an error with adding currencies");
+      throw new DBError('There is an error with adding currencies');
     }
   }
 
-  private formatDate = (date: string) => dayjs(date).format("DD/MM/YYYY");
+  private formatDate = (date: string) => dayjs(date).format('DD/MM/YYYY');
 
   private async updateCurrencyRates(data: Transaction[]) {
     const rates = await this.readJSONData(this.ratesPath);
-    const dates = data.map((item) => this.formatDate(item.processDate)).filter((item) => !rates[item as Currency]);
+    const dates = data
+      .map((item) => this.formatDate(item.processDate))
+      .filter((item) => !rates[item as Currency]);
 
     const filteredDates = Array.from(new Set(dates));
 
@@ -97,9 +105,9 @@ export class DB {
       if (!this.rates[date]) {
         this.rates = await this.readJSONData(this.ratesPath);
       }
-      return parseFloat(this.rates[date][currency].value.replace(",", "."));
+      return this.rates[date][currency].value;
     } catch (error) {
-      throw new DBError("Something wrong with rates reading");
+      throw new DBError('Something wrong with rates reading');
     }
   }
 
@@ -109,8 +117,8 @@ export class DB {
       const filePath = join(this.transactionsPath, nameWithExt);
       await this.updateCurrencyRates(data);
       const dataWithCurencyPromises = data.map(async (item) => {
-        const rate = await this.getCurrencyValue(this.formatDate(item.processDate), "TRY");
-        const convertedAmount = Math.round(rate * item.amount * 100) / 100
+        const rate = await this.getCurrencyValue(this.formatDate(item.processDate), 'TRY');
+        const convertedAmount = Math.round(rate * item.amount * 100) / 100;
         return { ...item, rate, convertedAmount };
       });
       const dataWithCurency = await Promise.all(dataWithCurencyPromises);
@@ -128,7 +136,7 @@ export class DB {
       const info = fileNames.map((filename) => path.parse(filename).name);
       return { data: info, error: null, ok: true };
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Something went wrong";
+      const message = error instanceof Error ? error.message : 'Something went wrong';
       return { data: null, error: message, ok: false };
     }
   }
@@ -140,7 +148,7 @@ export class DB {
       const data: Transaction[] = JSON.parse(buffer.toString());
       return { data, ok: true };
     } catch (error) {
-      const message = "The filename is not correct";
+      const message = 'The filename is not correct';
       return { error: message, ok: false };
     }
   }
@@ -151,10 +159,10 @@ export class DB {
     const serializedData = JSON.stringify(statement, null, 2);
     const isTargetExist = await this.checkPath(filePath);
     try {
-      if (!isTargetExist) throw new DBError("The file name is not correct");
+      if (!isTargetExist) throw new DBError('The file name is not correct');
       return await this.writeData(filePath, serializedData);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Something went wrong";
+      const message = error instanceof Error ? error.message : 'Something went wrong';
       return { data: null, error: message, ok: false };
     }
   }
