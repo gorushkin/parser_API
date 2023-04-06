@@ -39,9 +39,10 @@ export const checkFilesPath = async (path: string) => {
 export const delay = async (cb: Function, time: number = 1000) =>
   new Promise((resolve) => setTimeout(() => resolve(cb()), time));
 
-const convertStringToNumber = (value: string, nominal: string) => {
-  const getNumber = (str: string) => parseFloat(str.replace(',', '.'));
-  return Number((getNumber(value) / getNumber(nominal)).toFixed(4));
+const convertStringToNumber = (str: string) => parseFloat(str.replace(',', '.'));
+
+const getValue = (value: string, nominal: string) => {
+  return Number((convertStringToNumber(value) / convertStringToNumber(nominal)).toFixed(4));
 };
 
 export const getRate = async (date: string) => {
@@ -55,8 +56,9 @@ export const getRate = async (date: string) => {
       ...acc,
       [item.CharCode._text]: {
         name: item.Name._text,
-        value: item.Value._text,
-        convertedValue: convertStringToNumber(item.Value._text, item.Nominal._text),
+        _value: convertStringToNumber(item.Value._text),
+        _nominal: convertStringToNumber(item.Nominal._text),
+        value: getValue(item.Value._text, item.Nominal._text),
         code: item.CharCode._text,
       },
     }),

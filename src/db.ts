@@ -18,6 +18,7 @@ export class DB {
     this.ratesPath = join(this.dbPath, 'rates.json');
     const isPathExist = await this.checkPath(this.dbPath);
     const isRatesFileExist = await this.checkPath(this.ratesPath);
+    const isTransactionsPathExist = await this.checkPath(this.transactionsPath);
     if (!isPathExist) {
       await this.makeDbFolder(this.dbPath);
       await this.makeDbFolder(this.transactionsPath);
@@ -25,6 +26,9 @@ export class DB {
     }
     if (!isRatesFileExist) {
       await fs.writeFile(this.ratesPath, JSON.stringify({}), 'utf-8');
+    }
+    if (!isTransactionsPathExist) {
+      await this.makeDbFolder(this.transactionsPath);
     }
   }
 

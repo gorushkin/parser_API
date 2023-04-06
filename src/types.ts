@@ -37,7 +37,7 @@ export interface CurResponse {
 
 export type Currencies = Record<
   Currency,
-  { name: string; value: number; nominal: number; code: Currency }
+  { name: string; value: number; _nominal: number; code: Currency; _value: number }
 >;
 
 export type Rates = Record<string, Currencies>;
