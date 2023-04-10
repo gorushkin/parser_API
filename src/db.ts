@@ -3,8 +3,9 @@ import { Transaction } from 'parser';
 import fs from 'fs/promises';
 import { DBError } from './error';
 import dayjs from 'dayjs';
-import { getRate } from './until';
-import { Rates, Currency, DBResult } from './types';
+import { getRate, getRoundedValue } from './until';
+import { Rates, Currency, DBResult, Summary, GroupedSummary } from './types';
+import { defaultCurrency } from './constants';
 
 export class DB {
   transactionsPath: string;
@@ -115,6 +116,23 @@ export class DB {
     }
   }
 
+  private getSummary(
+    currentIndex: number,
+    balance: number,
+    amount: number,
+    summary: Summary,
+    firstIndex: number,
+    lastIndex: number
+  ): Summary {
+    return {
+      ...(currentIndex === firstIndex && { startBalance: getRoundedValue(balance - amount) }),
+      ...summary,
+      ...(amount >= 0 && { income: getRoundedValue(summary.income + amount) }),
+      ...(amount < 0 && { outcome: getRoundedValue(summary.outcome - amount) }),
+      ...(currentIndex === lastIndex && { endBalance: getRoundedValue(balance) }),
+    };
+  }
+
   async updateStatement(data: Transaction[], name: string) {
     try {
       const nameWithExt = `${name}.json`;
@@ -122,11 +140,48 @@ export class DB {
       await this.updateCurrencyRates(data);
       const dataWithCurencyPromises = data.map(async (item) => {
         const rate = await this.getCurrencyValue(this.formatDate(item.processDate), 'TRY');
-        const convertedAmount = Math.round(rate * item.amount * 100) / 100;
-        return { ...item, rate, convertedAmount };
+        const convertedAmount = getRoundedValue(rate * item.amount);
+        return {
+          ...item,
+          rate,
+          convertedAmount,
+          currency: defaultCurrency,
+          memo: `${defaultCurrency} - ${item.description}`,
+          convertedBalance: getRoundedValue(rate * item.balance),
+        };
       });
-      const dataWithCurency = await Promise.all(dataWithCurencyPromises);
-      const serializedData = JSON.stringify(dataWithCurency, null, 2);
+
+      const transactions = await Promise.all(dataWithCurencyPromises);
+
+      const summary = transactions.reduce<GroupedSummary>(
+        (acc, { amount, balance, convertedAmount, convertedBalance }, i, list) => {
+          const defaultSummary = this.getSummary(
+            i,
+            balance,
+            amount,
+            acc.defaultSummary,
+            0,
+            list.length - 1
+          );
+
+          const convertedSummary = this.getSummary(
+            i,
+            convertedBalance,
+            convertedAmount,
+            acc.convertedSummary,
+            0,
+            list.length - 1
+          );
+
+          return { defaultSummary, convertedSummary };
+        },
+        {
+          defaultSummary: { income: 0, outcome: 0, startBalance: 0, endBalance: 0 },
+          convertedSummary: { income: 0, outcome: 0, startBalance: 0, endBalance: 0 },
+        }
+      );
+
+      const serializedData = JSON.stringify({ transactions, summary }, null, 2);
       const res = await fs.writeFile(filePath, serializedData);
       return { data: res, error: null, ok: true };
     } catch (error) {

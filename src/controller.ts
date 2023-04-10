@@ -1,10 +1,10 @@
-import { Parser, Transaction } from "parser";
-import { Request, Response } from "express";
-import { FormattedRequest } from "./types";
-import fs from "fs/promises";
-import { db } from ".";
-import { getBody } from "./until";
-import { AppError } from "./error";
+import { Parser, Transaction } from 'parser';
+import { Request, Response } from 'express';
+import { FormattedRequest } from './types';
+import fs from 'fs/promises';
+import { db } from '.';
+import { getBody } from './until';
+import { AppError } from './error';
 const parser = new Parser();
 
 export const getData = (data: Buffer) => parser.parse(data);
@@ -18,11 +18,11 @@ export const uploadFile = async (req: Request, res: Response) => {
     const fileContent = await fs.readFile(path);
     const data = getData(fileContent);
     const { error, ok } = await db.updateStatement(data.transactions, fieldName);
-    if (ok) return res.status(200).send({ data: fileInfo });
-    const message = error instanceof Error ? error.message : "Something went wrong";
+    if (ok) return res.status(200).send({ data: 'fileInfo' });
+    const message = error instanceof Error ? error.message : 'Something went wrong';
     throw new AppError(message);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Something went wrong";
+    const message = error instanceof Error ? error.message : 'Something went wrong';
     res.status(400).send({ error: message });
   }
 };

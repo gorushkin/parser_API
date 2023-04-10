@@ -66,3 +66,5 @@ export const getRate = async (date: string) => {
   );
   return currencies;
 };
+
+export const getRoundedValue = (value: number) => Math.round(value * 100) / 100;

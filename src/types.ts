@@ -37,9 +37,20 @@ export interface CurResponse {
 
 export type Currencies = Record<
   Currency,
-  { name: string; value: number; _nominal: number; code: Currency; _value: number }
+  {
+    name: string;
+    value: number;
+    _nominal: number;
+    code: Currency;
+    _value: number;
+    convertedValue: number;
+  }
 >;
 
 export type Rates = Record<string, Currencies>;
 
 export type DBResult<T> = { data: T; ok: true } | { error: string; ok: false };
+
+export type Summary = { income: number; outcome: number, startBalance: number, endBalance: number };
+
+export type GroupedSummary = {defaultSummary: Summary, convertedSummary: Summary }

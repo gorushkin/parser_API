@@ -22,7 +22,7 @@ const init = async (app: Express, tempFilesPath: string, port: number) => {
 
   const options = {
     uploadDir: tempFilesPath,
-    // autoClean: true,
+    autoClean: true,
   };
 
   app.use(formData.parse(options));
