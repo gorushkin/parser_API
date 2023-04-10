@@ -52,3 +52,19 @@ export const uploadStatement = async (req: Request, res: Response) => {
   if (ok) return res.status(200).send({ data });
   res.status(400).send({ error });
 };
+
+export const exportStatement = async (req: Request, res: Response) => {
+  const { name } = req.params;
+
+  if (!name) res.status(400).send({ error: 'There is no statement name' });
+
+  const filePath = await db.exportStatement(name);
+
+  res
+    .set({
+      'Content-Type': 'application/octet-stream',
+      'Content-Disposition': `attachment; filename="filename.jpg"`,
+    })
+    .status(200)
+    .sendFile(filePath);
+};

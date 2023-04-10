@@ -1,4 +1,5 @@
 import { Request } from 'express';
+import { Transaction } from 'parser';
 
 export interface FormattedRequest extends Request {
   files: Record<string, File>;
@@ -51,6 +52,8 @@ export type Rates = Record<string, Currencies>;
 
 export type DBResult<T> = { data: T; ok: true } | { error: string; ok: false };
 
-export type Summary = { income: number; outcome: number, startBalance: number, endBalance: number };
+export type Summary = { income: number; outcome: number; startBalance: number; endBalance: number };
 
-export type GroupedSummary = {defaultSummary: Summary, convertedSummary: Summary }
+export type GroupedSummary = { defaultSummary: Summary; convertedSummary: Summary };
+
+export type Statement = { transactions: Transaction[]; summary: GroupedSummary };
